@@ -2,7 +2,7 @@ const axios = require('axios');
 
 class MpesaService {
   constructor() {
-    this.consumerKey = process.env.MPESA_CONSUMER_KEY || 'ZhgFftfTdRizvzlcANHzWmHzSec7IFAWuFGmWdCyioz3uigkth';
+    this.consumerKey = process.env.MPESA_CONSUMER_KEY || 'ZhgFftfTdRizvzlcANHzWmHzSec7IFAWuFGmWdCyioz3uigk';
     this.consumerSecret = process.env.MPESA_CONSUMER_SECRET || 'NXtApB0yHl6ciAfW72N9jjDM6iPTG7EEFwtlyGEV20Q5GaYxsd7m4qAYIPQGwDp0';
     this.shortCode = process.env.MPESA_SHORTCODE || '174379'; // Your business shortcode
     this.passKey = process.env.MPESA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
