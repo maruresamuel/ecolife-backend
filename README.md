@@ -1,1 +1,0 @@
-# ecolife-backend
