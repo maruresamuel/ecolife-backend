@@ -4,11 +4,15 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
 // Load environment variables
 dotenv.config();
+
+// Initialize Express app
+const app = express();
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads', 'products');
@@ -16,12 +20,6 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
   console.log('📁 Created uploads directory');
 }
-
-// Connect to MongoDB
-connectDB();
-
-// Initialize Express app
-const app = express();
 
 // Middleware
 app.use(cors());
@@ -31,6 +29,17 @@ app.use(morgan('dev'));
 
 // Serve static files (uploaded images)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// 🔒 Optional safety: block requests if DB not ready
+app.use((req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Server is starting, please try again shortly...',
+    });
+  }
+  next();
+});
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -58,7 +67,7 @@ app.get('/', (req, res) => {
       vendor: '/api/vendor',
       fillus: '/api/fillus',
       reviews: '/api/reviews',
-      wallet: '/api/wallet'
+      wallet: '/api/wallet',
     },
   });
 });
@@ -66,13 +75,25 @@ app.get('/', (req, res) => {
 // Error handling middleware (must be last)
 app.use(errorMiddleware);
 
-// Start server
-const PORT = process.env.PORT || 5000;
-const HOST = '0.0.0.0'; // Listen on all network interfaces
-app.listen(PORT, HOST, () => {
-  console.log(`🚀 Server running on ${HOST}:${PORT}`);
-  console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Local: http://localhost:${PORT}`);
-  console.log(`🔗 Network: http://192.168.0.100:${PORT}`);
-  console.log(`🔗 Android Emulator: http://10.0.2.2:${PORT}`);
-});
+// 🚀 START SERVER ONLY AFTER DB CONNECTS
+const startServer = async () => {
+  try {
+    await connectDB(); // ⬅️ Wait for MongoDB connection
+
+    const PORT = process.env.PORT || 5000;
+    const HOST = '0.0.0.0';
+
+    app.listen(PORT, HOST, () => {
+      console.log(`🚀 Server running on ${HOST}:${PORT}`);
+      console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔗 Local: http://localhost:${PORT}`);
+      console.log(`🔗 Network: http://192.168.0.100:${PORT}`);
+      console.log(`🔗 Android Emulator: http://10.0.2.2:${PORT}`);
+    });
+
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+  }
+};
+
+startServer();
